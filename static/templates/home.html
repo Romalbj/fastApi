@@ -1,0 +1,88 @@
+{% extends 'index.html' %}
+
+
+{% block content %}    
+
+    {% if user %}
+    
+    <div class="icon_container">
+        <a href="/user/{{user.id}}/profile">
+            <i class="fa-solid fa-circle-user"></i>
+        </a>
+
+        <button class="logout_button" onclick="logOut()">Выйти из акаунта</button>
+        
+    </div>
+    
+    <div class="home_container">
+        <a class="button" href="http://127.0.0.1:8000/post/show_posts">Смотреть посты</a>
+        <a class="create_post_button" href="http://127.0.0.1:8000/post/create_post_form">Написать пост</a>
+    </div>  
+    
+    {% else %}  
+
+    <div class="home_container">
+        <a class="button" href="http://127.0.0.1:8000/user/log_in_page">Войти</a>
+        <a class="button" href="http://127.0.0.1:8000/user/sign_up_page">Зарегистрироваться</a>
+        <a class="button" href="http://127.0.0.1:8000/show_posts">Смотреть посты</a>
+        <a class="create_post_button" href="http://127.0.0.1:8000/post/create_post_form">Написать пост</a>
+    </div>
+    {% endif %}
+
+
+    
+    
+
+    <script>
+
+
+        const buttons = document.querySelectorAll('.button')
+        const createPostButton = document.querySelector('.create_post_button')
+
+        const profileIcon = document.querySelector('.icon_container')
+        const logoutButton = document.querySelector('.logout_button')
+
+
+        buttons.forEach(button => button.addEventListener('pointerdown', function onPointerdDown(event) {
+            button.style.transform = 'scale(0.95)'
+            button.style.boxShadow = 'none'
+        })
+    )
+
+        buttons.forEach(button => button.addEventListener('pointerup', async function onPointerdUp(event) {
+            button.style.transform = 'scale(1)'
+            button.style.boxShadow = '1px 2px 5px 1px rgba(89, 58, 116, 0.573)'    
+        })    
+    )
+
+
+    // let token
+    createPostButton.addEventListener('click', function onClick() {
+        // token = localStorage.getItem('access_token')
+    
+        if (!profileIcon) {
+            event.preventDefault()
+            alert('⛔️ Чтобы написать пост, нужно авторизоваться')
+            return
+            }
+        }
+    )
+
+    
+    logoutButton.addEventListener('pointerdown', function onPointerdDown(event) {
+        this.style.transform = 'scale(0.95)'
+        this.style.boxShadow = 'none'
+    })
+
+    logoutButton.addEventListener('pointerup', function onPointerdUp(event) {
+        this.style.transform = 'scale(1)'
+        this.style.boxShadow = '1px 2px 5px 1px rgba(89, 58, 116, 0.573)'
+    })
+
+    
+    
+    
+
+    </script>
+
+{% endblock content %}

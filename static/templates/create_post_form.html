@@ -1,0 +1,61 @@
+{% extends 'index.html' %}
+
+
+     {% block content %}
+
+     <div class="form_container">
+        <form class="form create_post_form">
+            <h3>Написать пост</h3>
+            <input type="text" value="" placeholder="Заголовок" name="title" id="title" autocomplete="off" required>
+            <textarea name="content" id="content" placeholder="Напишите текст поста..." rows="6" required></textarea>
+
+            <button type="submit">Написать</button>
+
+            <div class="errors" hidden></div>
+        </form>
+     </div>
+
+
+
+    
+
+    <script>
+        const createPostForm = document.querySelector('.create_post_form')
+        const errors = document.querySelector('.errors')
+
+        createPostForm.addEventListener('submit', async function onSubmit(event) {
+            event.preventDefault(); 
+            errors.textContent = '';
+            errors.hidden = true;
+
+            const post_title = document.getElementById('title').value.trim()
+            const post_content = document.getElementById('content').value.trim()
+            
+            if (!post_title || !post_content) {
+                errors.textContent = 'Заполните все поля ❗️❗️'
+            }
+
+            const response = await fetch('/post/create', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                },
+                body: JSON.stringify({
+                    title: post_title,
+                    content: post_content,
+                }) 
+
+            })
+
+            if (response.ok) {
+                alert('Пост создан ✅')
+                createPostForm.reset()
+            }
+        })
+
+    </script>
+
+
+{% endblock content %}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <title>{% block title %}Мой сайт{% endblock %}</title> -->
+
+    <link rel="stylesheet" href="/static/main.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.5.1/css/all.css">
+</head>
+<body>
+
+
+    <main>
+        {% block content %}{% endblock content %}
+    </main>
+
+    <script>
+        function logOut() {
+            const key = 'access_token';
+            // console.log('До выхода:', localStorage.getItem(key));
+
+            alert('Вы успешно вышли из аккаунта ✅')
+            localStorage.removeItem('access_token')
+            // console.log('После выхода:', localStorage.getItem(key));
+
+            // Удаляем cookie
+            document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+
+            window.location = 'http://127.0.0.1:8000/user/log_in_page'
+        }
+
+
+
+//    const moreButtons = document.querySelectorAll('.more_button')
+    // const postContent = document.querySelector('.post_content')
+
+    const postsContainer = document.querySelector('.posts_container')
+
+    if (postsContainer) {
+        postsContainer.addEventListener('click', function onClick(event) {
+            const button = event.target.closest('.more_button');
+
+            if (!button) return
+
+            const postId = button.dataset.postId
+            const postContent = document.querySelector(`[data-content-post-id="${postId}"]`)
+
+            if (!postContent) return; 
+
+            const isShort = postContent.classList.contains('short');
+
+            if (isShort) {
+                postContent.classList.remove('short');
+                postContent.classList.add('full');
+                button.textContent = 'Скрыть'
+            } else {
+                postContent.classList.add('short');
+                postContent.classList.remove('full');
+                button.textContent = 'Читать полностью'
+            }
+        })
+
+
+        postsContainer.addEventListener('pointerdown', function onPointerdDown(event) {
+            const button = event.target.closest('.more_button')
+            if (button) {
+                button.style.transform = 'scale(0.95)'
+                button.style.boxShadow = 'none'
+
+            }
+        }, { capture: true })
+
+        postsContainer.addEventListener('pointerup', function onPointerdUp(event) {
+            if (event.target.closest('.more_button')) {
+                const button = event.target.closest('.more_button')
+                button.style.transform = 'scale(1)'
+                button.style.boxShadow = '1px 2px 5px 1px rgba(89, 58, 116, 0.573)'
+            }
+        }, { capture: true })
+    }
+   
+    
+ 
+    </script>
+    
+</body>
+
+
+</html>

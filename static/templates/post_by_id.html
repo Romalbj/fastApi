@@ -1,0 +1,28 @@
+{% extends 'index.html' %}
+
+
+{% block content %}
+
+<div class="posts_container">
+    <h1>Пост</h1>
+
+    <ul>
+        <li class="post">
+            
+            <h3 style="width: 100%;" class="post_title">{{ post.title }}</h3>
+            <div class="user">
+                <h3>Пользователь</h3>
+                <p class="user_created">{{ post.author.username}}</p>
+            </div>
+                
+            <p class="post_content full">{{ post.content }} </p>
+
+            <div class="datetime">
+                <p class="post_date_created">{{ post.date_posted.strftime('%d.%m.%Y') }}</p>
+                <p class="post_time_created">{{ post.date_posted.strftime('%H:%M') }}</p>
+            </div>
+        </li>
+    </ul>
+</div>
+
+{% endblock content %}

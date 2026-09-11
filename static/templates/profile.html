@@ -1,0 +1,352 @@
+{% extends 'index.html' %}
+
+
+    {% block content %}
+
+
+    <div class="form_container profile">
+
+        <form class="form change_profile_form">
+            <div class="header_image">
+                <h3 data-user-id="{{id}}">Профиль</h3>
+                <input type="file" name="file" id="avatar" accept="image/*" hidden>
+                
+                <div class="image_wrapper">
+                    <i class="fa-solid fa-xmark delete_photo"></i>
+                    <img src="{{profile_pic}}" alt="">
+                </div>
+                
+            </div>
+
+
+            <input type="text" value="{{username}}" placeholder="Имя" name="username" id="username">
+            <input type="email" value="{{email}}" placeholder="Почта" name="email" id="email">
+
+            <div class="change_password">
+                <a href="/change-password/form">
+                    <!-- <i class="fa-solid fa-unlock-keyhole"></i> -->
+                    <i class="fa-solid fa-key"></i>
+                    <!-- <i class="fa-solid fa-lock"></i> -->
+                    <!-- <i class="fa-solid fa-user-lock"></i> -->
+                    Сменить пароль
+                </a>
+            </div>
+
+            <button class="submit_button" type="submit">Сохранить</button>
+
+            <div class="errors" hidden></div>
+        </form>
+
+    </div>    
+
+    <div class="posts_container profile" data-limit="{{ posts.limit }}" data-has-more="{{ posts.has_more }}">
+        {% if posts %}
+
+        <ul>
+            {% for item in posts  %}
+            {% set post = item.post %}
+            {% set show_btn = item.show_read_more %}
+
+            <li class="post">
+                <i class="fa-solid fa-pencil edit_icon" data-post-id="{{ post.id }}"></i>
+                <a class="post_link" href="http://127.0.0.1:8000/post/show_post/{{ post.id }}">    
+                    <h3 style="width: 100%;" class="post_title">{{ post.title }}</h3>
+                </a>
+
+                <p class="post_content short" data-content-post-id="{{ post.id }}">{{ post.content }} </p>
+
+                <div class="datetime">
+                    <p class="post_date_created">{{ post.date_posted.strftime('%d.%m.%Y') }}</p>
+                    <p class="post_time_created">{{ post.date_posted.strftime('%H:%M') }}</p>
+                </div>
+
+                {% if show_btn %}
+                <div class="button_container">
+                    <button class="more_button" data-post-id="{{ post.id }}">Читать полностью</button>
+                </div>
+                {% endif %}
+            </li>
+
+            {% endfor %}
+        </ul>
+
+        {% if has_more %}
+        <button class="more_posts_button">Показать больше</button>
+        {% endif %}
+
+        
+        {% else %}
+        <h3>Пока постов нет</h3>
+        <a class="create_post" href="http://127.0.0.1:8000/create_post_form">Написать пост</a>
+
+        {% endif %}
+    </div>
+
+
+
+    <script type="module">
+
+        const postsContainerList = document.querySelector('.posts_container ul')
+        // const postsContainer = document.querySelector('.posts_container ')
+        const morePostsButton = document.querySelector('.more_posts_button')
+        const userId = document.querySelector('.header_image h3').dataset.userId
+
+        let currentOffset = +postsContainer.dataset.limit || 5
+        const limit = postsContainer.dataset.limit || 5
+        let hasMore = postsContainer.dataset.hasMore === 'true'
+
+        const editIcons = document.querySelectorAll('.edit_icon')
+
+        const shortEmailError = 'Value should have at least 10 items after validation'
+        const list_of_errors = {
+            'String should have at least 5 characters': 'Имя должно быть длиннее 5 символов',
+            'value is not a valid email address: The part after the @-sign is not valid. It should have a period.': 'Некорректный адрес почты',
+            'String should have at most 30 characters': 'Слишком длинное имя или адрес почты (максимум 30 символов)',
+            'shortEmail': 'Слишком короткий адрес почты (минимум 10 символов)'
+        }
+
+        console.log(list_of_errors.shortEmailError)
+
+
+        const changeProfileForm = document.querySelector('.change_profile_form')
+        const errorsDiv = document.querySelector('.errors')
+
+        const image = document.querySelector('.header_image img')
+        const imageWrapper = document.querySelector('.image_wrapper')
+        const uploadInput = document.getElementById('avatar')
+
+        const submitButton = document.querySelector('.submit_button')
+
+        const deletePhotoButton = document.querySelector('.delete_photo')
+        
+        let deletePhoto = false
+        imageWrapper.addEventListener('click', (event) => {
+            if (event.target == deletePhotoButton) {
+                image.src = '/static/profile_pics/default.png';
+                deletePhoto = true;
+            
+            }
+            
+            if (event.target == image) {
+                uploadInput.click()
+                
+            }
+
+
+        })
+
+        
+        // deletePhotoButton.addEventListener('click', function onClick() {
+
+        // })
+
+
+        uploadInput.addEventListener('change', function onChange(event) {
+            const file = this.files[0];
+            console.log(uploadInput.value)
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    image.src = e.target.result
+                    // avatarPreview.innerHTML = `
+                    //     <img src="${e.target.result}" 
+                    //         style="max-width: 120px; max-height: 120px; border-radius: 50%; margin-top: 8px;">
+                    // `;
+                    // avatarPreview.hidden = false;                
+                };
+                reader.readAsDataURL(file);
+            }
+        })           
+        
+
+        changeProfileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim()
+            const email = document.getElementById('email').value.trim()
+
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('email', email);
+            formData.append('delete_photo', deletePhoto)
+            
+            const file = uploadInput.files[0];
+            if (file) {
+                formData.append('file', file)
+            }            
+            
+            const response = await fetch(`/user/${ userId }/profile`, {
+                method: 'PATCH',
+                body: formData,
+            });
+            
+            if (response.ok) {
+                alert('Данные профиля успешно обновлены ✅')
+                window.location.href = 'http://127.0.0.1:8000/'
+            } else {
+                const data = await response.json()
+                try {
+                    let message = data.detail[0].msg
+                    if (message.includes(shortEmailError)) {
+                        message = list_of_errors.shortEmail
+                        errorsDiv.hidden = false;
+                        errorsDiv.textContent = message;
+                        return
+                    }
+                    errorsDiv.textContent = list_of_errors.message;
+                    errorsDiv.hidden = false;
+                    console.log(data)
+                    alert(errorsDiv.textContent = list_of_errors[message])
+                    } 
+                catch (error) {
+                    
+                }
+   
+            }
+        });
+
+
+    let targetIcon 
+    editIcons.forEach(icon => {
+        
+        icon.addEventListener('pointerdown', (e) => {
+            targetIcon = e.target
+            e.target.style.transform = 'scale(0.8)';
+        });
+
+        icon.addEventListener('pointerup', (e) => {
+            e.target.style.transform = 'scale(1)';
+        });
+
+        icon.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            const postId = e.currentTarget.dataset.postId;
+            if (postId) {
+                window.location.href = `/post/${postId}/edit`;
+            }
+        });
+    });
+
+
+    submitButton.addEventListener('pointerdown', (e) => {
+            submitButton.style.transform = 'scale(0.8)';
+        });
+
+    submitButton.addEventListener('pointerup', (e) => {
+            submitButton.style.transform = 'scale(1)';
+        });
+
+
+    window.addEventListener('pointerup', (e) => {
+        if (targetIcon) {
+            targetIcon.style.transform = 'scale(1)';
+            targetIcon = undefined
+        }
+    })
+
+
+
+     function createPostHTML(post, content) {
+        const showBtn = content.length > 200;
+
+        const newElement = document.createElement('LI')
+
+        newElement.classList.add('post')
+        newElement.innerHTML = `
+        <a class="post_link" href="/show_post/${post.id}">
+                    <h3 class="post_title">${escapeHtml(post.title)}</h3>
+                </a>
+                <div class="user">
+                    <h3>Пользователь</h3>
+                    <a class="user_posts_link" href="/user/${post.user_id}/show_posts">
+                        <p class="user_created">${escapeHtml(post.author?.username || 'Unknown')}</p>
+                    </a>
+                </div>
+                
+                <p class="post_content short" data-content-post-id="${post.id}">${escapeHtml(content)}</p>
+
+                <div class="datetime">
+                    <p class="post_date_created">${formatDate(post.date_posted, 'DD.MM.YYYY')}</p>
+                    <p class="post_time_created">${formatDate(post.date_posted, 'HH:mm')}</p>
+                </div>
+
+                ${showBtn ? `
+                    <div class="button_container">
+                        <button class="more_button" data-post-id="${post.id}">Читать полностью</button>
+                    </div>
+                ` : ''}
+        `
+
+        return newElement       
+    }
+
+    // Простая защита от XSS
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // Форматирование даты (можно вынести в утилиту)
+    function formatDate(dateStr, format) {
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        if (format === 'DD.MM.YYYY') return `${day}.${month}.${year}`;
+        if (format === 'HH:mm') return `${hours}:${minutes}`;
+        return dateStr;
+    }
+    
+
+    async function loadMorePosts() {
+        const response = await fetch(`/api/user/${userId}/profile?skip=${currentOffset}&limit=${limit}`, )
+
+        if (!response.ok) {
+            throw new Error('Ошибка загрузки постов');
+        }
+
+        const data = await response.json();
+
+        for (let item of data.posts) {
+            const post = item.post; 
+            const content = post.content || "";
+
+            postsContainerList.insertAdjacentElement('beforeend', createPostHTML(post, content));
+        }
+
+        currentOffset += data.posts.length;
+        hasMore = data.has_more;
+        console.log(currentOffset)
+
+        if (!hasMore) {
+            morePostsButton.hidden = true
+        }
+    }
+
+
+    morePostsButton.addEventListener('click', loadMorePosts)    
+
+    morePostsButton.addEventListener('pointerdown', function onPointerdDown(event) {
+            this.style.transform = 'scale(0.95)'
+            this.style.boxShadow = 'none'
+    }, { capture: true })
+
+    morePostsButton.addEventListener('pointerup', function onPointerdUp(event) {
+        this.style.transform = 'scale(1)'
+        this.style.boxShadow = '1px 2px 5px 1px rgba(89, 58, 116, 0.573)'
+    }, { capture: true })
+
+
+
+    </script>
+
+    {% endblock content %}

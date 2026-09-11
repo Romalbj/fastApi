@@ -1,0 +1,78 @@
+{% extends 'index.html' %}
+
+
+    {% block content %}
+
+    <div class="form_container" data-post-id="{{ post.id }}">
+        <form class="form edit_post_form">
+            <h3>Редактировать пост</h3>
+            <input type="text" value="{{ post.title }}" placeholder="Заголовок" name="title" id="title" required>
+            <textarea name="content" id="content" placeholder="Напишите текст поста..." rows="8" required>{{ post.content }}</textarea>
+
+            <button type="submit">Сохранить</button>
+
+            <div class="errors" hidden></div>
+        </form>
+     </div>
+
+     <script>
+
+        const textarea = document.querySelector('textarea')
+
+        const submitButton = document.querySelector('button')
+
+        const postId = document.querySelector('.form_container').dataset.postId
+
+        const postEditForm = document.querySelector('.edit_post_form')
+
+        postEditForm.addEventListener('submit', async function onSubmit(event) {
+            event.preventDefault()
+
+            const title = document.getElementById('title').value.trim()
+            const content = document.getElementById('content').value.trim()
+
+            const payload = {
+                'title': title,
+                'content': content
+            }
+
+            response = await fetch(`/post/${postId}/edit`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+
+            if (response.ok) {
+                alert('Изменения сохранены ✅')
+                const prevUrl = document.referrer || '/'; // если реферер пустой — идём на главную
+                
+                // 2. Переходим с параметром, чтобы сломать кэш (браузер думает, что это новая страница)
+                window.location.href = prevUrl + (prevUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+            }
+        })
+
+
+        submitButton.addEventListener('pointerdown', function onPointerdDown(event) {
+            this.style.transform = 'scale(0.95)'
+            this.style.boxShadow = 'none'
+        })
+
+        submitButton.addEventListener('pointerup', function onPointerdUp(event) {
+            this.style.transform = 'scale(1)'
+            this.style.boxShadow = '1px 2px 5px 1px rgba(89, 58, 116, 0.573)'
+        })
+
+
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';          
+            textarea.style.height = textarea.scrollHeight + 'px'; 
+        }
+
+        autoResizeTextarea(textarea)
+
+     </script>
+
+
+
+
+    {% endblock content %}

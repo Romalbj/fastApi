@@ -1,0 +1,20 @@
+{% extends 'index.html' %}
+
+
+     {% block content %}
+     
+
+    <h3>Аккаунт успешно создан ✅</h3>
+
+    <button onclick="loginRedirect()">Войти в акаунт</button>
+
+    <script>
+        function loginRedirect() {
+            window.location = 'http://127.0.0.1:8000/user/log_in_page'
+        }
+
+    </script>
+    
+
+     {% endblock content %}
+     

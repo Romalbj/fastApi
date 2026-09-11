@@ -1,0 +1,159 @@
+{% extends 'index.html' %}
+
+
+{% block content %}
+
+<div class="posts_container" data-limit="{{ posts.limit }}" data-has-more="{{ posts.has_more }}">
+
+    <h1>Посты пользователей</h1>
+
+
+    <ul>
+        {% for item in posts %}
+        {% set post = item.post %}
+        {% set show_btn = item.show_read_more %}
+
+        <li class="post">
+            <a class="post_link" href="http://127.0.0.1:8000/post/show_post/{{ post.id }}">
+                <h3 class="post_title">{{ post.title }}</h3>
+            </a>
+            <div class="user">
+                <h3>Пользователь</h3>
+                <a class="user_posts_link" href="/post/user/{{ post.user_id }}/show_posts">
+                    <p class="user_created">{{ post.author.username}}</p>
+                </a>
+            </div>
+                
+            <p class="post_content short" data-content-post-id="{{ post.id }}">{{ post.content }} </p>
+
+            <div class="datetime">
+                <p class="post_date_created">{{ post.date_posted.strftime('%d.%m.%Y') }}</p>
+                <p class="post_time_created">{{ post.date_posted.strftime('%H:%M') }}</p>
+            </div>
+
+            {% if show_btn %}
+            <div class="button_container">
+                <button class="more_button" data-post-id="{{ post.id }}">Читать полностью</button>
+            </div>
+            {% endif %}
+        </li>
+
+        {% endfor %}
+    </ul>
+
+    {% if has_more %}
+    <button class="more_posts_button">Показать больше</button>
+    {% endif %}
+</div>
+
+
+<script type="module">
+    const postsContainerList = document.querySelector('.posts_container ul')
+    // const postsContainer = document.querySelector('.posts_container ')
+    const morePostsButton = document.querySelector('.more_posts_button')
+
+    let currentOffset = +postsContainer.dataset.limit || 5
+    const limit = postsContainer.dataset.limit || 5
+    let hasMore = postsContainer.dataset.hasMore === 'true'
+
+    function createPostHTML(post, content) {
+        const showBtn = content.length > 200;
+
+        const newElement = document.createElement('LI')
+
+        newElement.classList.add('post')
+        newElement.innerHTML = `
+        <a class="post_link" href="/post/show_post/${post.id}">
+                    <h3 class="post_title">${escapeHtml(post.title)}</h3>
+                </a>
+                <div class="user">
+                    <h3>Пользователь</h3>
+                    <a class="user_posts_link" href="/post/user/${post.user_id}/show_posts">
+                        <p class="user_created">${escapeHtml(post.author?.username || 'Unknown')}</p>
+                    </a>
+                </div>
+                
+                <p class="post_content short" data-content-post-id="${post.id}">${escapeHtml(content)}</p>
+
+                <div class="datetime">
+                    <p class="post_date_created">${formatDate(post.date_posted, 'DD.MM.YYYY')}</p>
+                    <p class="post_time_created">${formatDate(post.date_posted, 'HH:mm')}</p>
+                </div>
+
+                ${showBtn ? `
+                    <div class="button_container">
+                        <button class="more_button" data-post-id="${post.id}">Читать полностью</button>
+                    </div>
+                ` : ''}
+        `
+
+        return newElement       
+    }
+
+    // Простая защита от XSS
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // Форматирование даты
+    function formatDate(dateStr, format) {
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        if (format === 'DD.MM.YYYY') return `${day}.${month}.${year}`;
+        if (format === 'HH:mm') return `${hours}:${minutes}`;
+        return dateStr;
+    }
+    
+
+    async function loadMorePosts() {
+        const response = await fetch(`/post/api/show_posts?skip=${currentOffset}&limit=${limit}`, )
+
+        if (!response.ok) {
+            throw new Error('Ошибка загрузки постов');
+        }
+
+        const data = await response.json();
+
+        for (let item of data.posts) {
+            const post = item.post; 
+            const content = post.content || "";
+
+            postsContainerList.insertAdjacentElement('beforeend', createPostHTML(post, content));
+        }
+
+        currentOffset += data.posts.length;
+        hasMore = data.has_more;
+
+        if (!hasMore) {
+            morePostsButton.hidden = true
+        }
+    }
+
+
+    morePostsButton.addEventListener('click', loadMorePosts)    
+
+    morePostsButton.addEventListener('pointerdown', function onPointerdDown(event) {
+            this.style.transform = 'scale(0.95)'
+            this.style.boxShadow = 'none'
+    }, { capture: true })
+
+    morePostsButton.addEventListener('pointerup', function onPointerdUp(event) {
+        this.style.transform = 'scale(1)'
+        this.style.boxShadow = '1px 2px 5px 1px rgba(89, 58, 116, 0.573)'
+    }, { capture: true })
+
+
+</script>
+
+{% endblock content %}

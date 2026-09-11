@@ -1,0 +1,119 @@
+{% extends 'index.html' %}
+
+
+     {% block content %}
+
+     <div class="form_container">
+        <form class="form log_in_form">
+            <h3>Авторизация</h3>
+            <input type="text" value="" placeholder="Имя" name="username" id="username">
+            <input type="text" placeholder="Пароль"  name="password" id="password_1" autocomplete="new-password">
+            <button type="submit">Войти</button>
+
+            <a href="/security/email-reset-password" class="forgot_password">Забыли пароль?</a>
+
+            <div class="errors" hidden></div>
+        </form>
+    </div>
+
+
+
+
+
+    <script>
+
+        const loginForm = document.querySelector('.log_in_form');
+        const errorsDiv = document.querySelector('.errors');
+        const submitButton = document.querySelector('button');
+
+        const usernameElem = document.getElementById('username')
+        const passwordElem = document.getElementById('password_1')
+        
+
+        loginForm.addEventListener('submit', async function onSubmit(event) {
+            event.preventDefault();
+            errorsDiv.hidden = true;
+            errorsDiv.textContent = '';
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password_1').value;
+
+
+            const areFieldsEmpty = checkInput(username, password)
+            if (areFieldsEmpty) {
+                errorsDiv.hidden = false;
+                errorsDiv.textContent = 'Поля не могут быть пустыми';
+                return
+            }
+
+            try {
+                const response = await fetch('/auth/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        username, 
+                        password
+                    })
+                });
+        
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('access_token', data.access_token);
+                window.location = 'http://127.0.0.1:8000/user/log_in/success'
+                alert('Вы успешно вошли в аккаунт ✅')
+            } else {
+                let message = 'Ошибка авторизации'
+                errorsDiv.hidden = false;
+                errorsDiv.textContent = 'Неверный логин или пароль';
+                try {
+                    const errData = await response.json();
+                    message = errData.detail || message;
+                } catch (err) {
+                    errorsDiv.hidden = false;
+                    errorsDiv.textContent = message;
+                }
+            }
+        }
+        catch (e) {
+            console.error('ошибка логина',e);
+        }
+    })
+
+    function checkInput(username, password) {
+        if (username.length == 0 || password.length == 0) {
+            alert('пустые поля')
+            return true
+        }
+        return false
+    }
+
+
+
+    submitButton.addEventListener('pointerdown', function onPointerdDown(event) {
+        this.style.transform = 'scale(0.95)'
+        this.style.boxShadow = 'none'
+    })
+
+    submitButton.addEventListener('pointerup', function onPointerdUp(event) {
+        this.style.transform = 'scale(1)'
+        this.style.boxShadow = '1px 2px 5px 1px rgba(89, 58, 116, 0.573)'
+    })
+
+
+
+    
+    function moveCursorToEnd (inputElem) {
+        inputElem.focus();
+        inputElem.setSelectionRange(inputElem.value.length, inputElem.value.length);
+    };
+
+
+
+    usernameElem.addEventListener('click', () => moveCursorToEnd(usernameElem));
+    passwordElem.addEventListener('click', () => moveCursorToEnd(passwordElem));
+    
+
+
+    </script>
+
+    {% endblock content %}

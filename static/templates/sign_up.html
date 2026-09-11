@@ -1,0 +1,211 @@
+{% extends 'index.html' %}
+
+
+     {% block content %}
+     
+    <div class="form_container">
+
+        <form class="form sign_up_form" enctype="multipart/form-data">
+            <h3>Регистрация</h3>
+
+            <div class="file_input_wrapper">
+                <label for="avatar" class="file_label">Фото профиля (необязательно)</label>
+                <button class="load_image_button" type="button">Выберите файл</button>
+                <input type="file" name="file" id="avatar" accept="image/*">
+                <div class="avatar_preview" id="avatar_preview" hidden></div>
+            </div>
+
+            <input type="text" value="" placeholder="Имя" name="username" id="username" required>
+            <input type="email" value="" placeholder="Почта" name="email" id="email" required>
+            <input type="text" placeholder="Пароль"  name="password" id="password_1" autocomplete="new-password" required>
+            <input type="text" placeholder="Повторите пароль"  name="password_repeat" id="password_2" required>
+            <button class="submit_button" type="submit">Отправить</button>
+
+            <div class="errors" hidden></div>
+        </form>
+
+    </div>
+
+
+
+    <script>
+
+
+        const list_of_errors = {
+            'Input should be greater than 0': 'id книги должен быть больше 0',
+            'String should have at least 5 characters': 'Имя должно быть длиннее 5 символов',
+            'Input should be a valid string': 'Параметр должен быть строкой',
+            'String should have at least 10 characters': 'Слишком короткий пароль (минимум 10 символов)',
+            'Value error, Пароль должен содержать хотя бы одну заглавную букву.': 'Пароль должен содержать хотя бы одну заглавную букву',
+            'Value error, Пароль должен содержать хотя бы одну цифру.': 'Пароль должен содержать хотя бы одну цифру',
+            'Value error, Пароль должен содержать хотя бы одну строчную букву.': 'Пароль должен содержать хотя бы одну строчную букву.',
+            'Value error, Пароль должен содержать хотя бы один спецсимвол.': 'Пароль должен содержать хотя бы один спецсимвол.',
+        }
+
+        // localStorage.setItem('numbers_error', false)
+        // localStorage.setItem('upper_case_error', false)
+        // localStorage.setItem('lower_case_error', false)
+        // localStorage.setItem('special_symbols_error', false)
+
+        const errorsDiv = document.querySelector('.errors')
+
+        const createUserFrom = document.querySelector('.sign_up_form')
+
+        const submitButton = document.querySelector('.submit_button');
+
+        const uploadButton = document.querySelector('.load_image_button')
+
+        const uploadInput = document.getElementById('avatar')
+
+        const avatarPreview = document.querySelector('.avatar_preview')
+
+
+
+        uploadInput.addEventListener('change', function onChange(event) {
+            const file = this.files[0];
+            console.log(uploadInput.value)
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarPreview.innerHTML = `
+                        <img src="${e.target.result}">`;
+                    avatarPreview.hidden = false;                
+                };
+                reader.readAsDataURL(file);
+            } else {
+                resetFileInput();
+            }
+        })          
+
+
+
+        createUserFrom.addEventListener('submit', async function omSubmit(event) {
+            event.preventDefault()
+
+            errorsDiv.hidden = true;
+            errorsDiv.textContent = '';
+
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password_1').value;
+            const passwordRepeat = document.getElementById('password_2').value;
+
+            if (check_passwords(password, passwordRepeat)) {
+
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('email', email);
+                formData.append('password', password);
+                // formData.append('password_repeat', passwordRepeat);
+
+                const file = uploadInput.files[0];
+                if (file) {
+                    formData.append('file', file)
+                }
+                
+                let data;
+                try {
+                    const response = await fetch('/auth/create/user', {
+                        method: 'POST',
+                        // headers: {
+                        //     'Accept': 'application/json',
+                        //     'Content-Type': 'application/json'
+                        // },
+                        // body: JSON.stringify({
+                        //     username: username, 
+                        //     password: password,
+                        //     email: email,
+                        // })
+
+                        body: formData,
+                    });
+
+                    if (response.ok) {
+                        data = await response.json();
+                        alert('Пользователь создан ✅');
+                        window.location.href = 'http://127.0.0.1:8000/user/sign_up/success';
+                        
+                    } else {
+                        // alert('Ошибка регистрации ⛔️');
+                        try {
+                            data = await response.json();
+                            console.log(data.detail.at(0).msg)
+                            errorsDiv.hidden = false
+                            errorsDiv.textContent = list_of_errors[data.detail.at(0).msg];
+                        }
+                        catch (error) {
+                            console.log( error);
+                            return;
+                        }
+
+                        let errorMessage = 'Произошла ошибка';
+                        if (Array.isArray(data)) {
+                            errorDiv.textContent = data[0]?.msg 
+                            console.log(data)
+                        }
+                }
+            }
+                catch (err) {
+                    console.error(err)
+                }
+
+            }
+            else {
+                errorsDiv.hidden = false
+                errorsDiv.textContent = 'Пароли не совпадают';
+                errorsDiv.style.color = '#d9534f';
+
+                let err = new Error('Пароли не совпадают')
+                console.log(err)
+                return err
+            }
+        })
+
+            
+        
+    
+    
+    function resetFileInput() {
+        avatarPreview.hidden = true;
+        avatarPreview.innerHTML = '';
+    }
+
+
+    function check_passwords(password_1, password_2) {
+       return password_1 === password_2
+    }
+
+
+
+    function onPointerdDown() {
+        this.style.transform = 'scale(0.95)'
+        this.style.boxShadow = 'none'
+    }   
+
+    function onPointerdUp() {
+        this.style.transform = 'scale(1)'
+        this.style.boxShadow = '1px 2px 5px 1px rgba(89, 58, 116, 0.573)'
+    }
+
+    submitButton.addEventListener('pointerdown', onPointerdDown)
+
+    submitButton.addEventListener('pointerup', onPointerdUp)
+
+    uploadButton.addEventListener('pointerdown', onPointerdDown)
+
+    uploadButton.addEventListener('pointerup', onPointerdUp)
+
+    uploadButton.addEventListener('click', () => {
+        uploadInput.click()
+    })
+
+
+
+    </script>
+
+    
+
+
+
+    {% endblock content %}
